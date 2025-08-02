@@ -30,22 +30,23 @@ export default async function Home() {
 }
 
 function getArticles(): Article[] {
-  const files = fs.readdirSync(path.join(process.cwd(), 'content/articles'));
+  const dirPath = path.join(process.cwd(), 'content/articles');
+  const files = fs.readdirSync(dirPath);
 
-  return files.map((filename) => {
-    const fileContent = fs.readFileSync(
-      path.join(process.cwd(), 'content/articles', filename),
-      'utf-8'
-    );
-    const { data, content } = matter(fileContent);
+  return files
+    .filter((file) => file.endsWith('.md')) // ✅ skip folders and non-markdown files
+    .map((filename) => {
+      const fileContent = fs.readFileSync(path.join(dirPath, filename), 'utf-8');
+      const { data, content } = matter(fileContent);
 
-    return {
-      title: data.title,
-      date: data.date,
-      excerpt: content.slice(0, 150) + '...',
-    };
-  });
+      return {
+        title: data.title,
+        date: data.date,
+        excerpt: content.slice(0, 150) + '...',
+      };
+    });
 }
+
 function slugify(text: string): string {
   return text
     .toLowerCase()
