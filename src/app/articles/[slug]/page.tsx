@@ -1,60 +1,70 @@
+// src/app/articles/[slug]/page.tsx
+
 import fs from 'fs';
 import path from 'path';
 import matter from 'gray-matter';
 import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
 
-type Params = {
+// Define the Params interface
+interface Params {
   slug: string;
-};
+}
 
-// Needed for pre-rendering pages
+// Define the Article type
+type Article = {
+  title: string;
+  date: string;
+  content: string;
+} | null;
+
+// Define the PageProps type explicitly to match Next.js expectations
+interface PageProps {
+  params: Promise<Params>;
+}
+
+// Generate static params for dynamic routes
 export async function generateStaticParams() {
   const dir = path.join(process.cwd(), 'content/articles');
   const files = fs.readdirSync(dir);
 
   return files
     .filter((file) => file.endsWith('.md'))
-    .map((filename) => {
-      const slug = filename.replace('.md', '');
-      return { slug };
-    });
+    .map((filename) => ({
+      slug: filename.replace('.md', ''),
+    }));
 }
 
-export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
-  const article = await getArticle(params.slug); // ✅ Fix is here
+// Generate metadata for the page
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { slug } = await params; // Unwrap the Promise
+  const article = await getArticle(slug);
 
   return {
     title: article?.title || 'Article',
   };
 }
 
+// Main page component
+export default async function ArticlePage({ params }: PageProps) {
+  const { slug } = await params; // Unwrap the Promise
+  const article = await getArticle(slug);
 
-export default async function ArticlePage({ params }: { params: Params }) {
-  const article = await getArticle(params.slug);
-
-  if (!article) return notFound(); // This handles null
+  if (!article) return notFound();
 
   return (
     <main className="p-6 max-w-3xl mx-auto">
-      <h1 className="text-3xl font-bold mb-2 text-green-700">{article.title}</h1>
+      <h1 className="text-3xl font-bold mb-2">{article.title}</h1>
       <p className="text-sm text-gray-500 mb-6">{article.date}</p>
-      <article className="prose prose-lg">
-        {article.content.split('\n\n').map((para, i) => (
-          <p key={i}>{para}</p>
-        ))}
-      </article>
+      <article className="prose prose-lg whitespace-pre-wrap">{article.content}</article>
     </main>
   );
 }
 
-
-
-async function getArticle(
-  slug: string
-): Promise<{ title: string; date: string; content: string } | null> {
+// Helper function to fetch article content
+async function getArticle(slug: string): Promise<Article> {
   try {
-    const file = fs.readFileSync(
+    const file = await fs.promises.readFile(
       path.join(process.cwd(), 'content/articles', `${slug}.md`),
       'utf-8'
     );
@@ -64,9 +74,7 @@ async function getArticle(
       date: data.date,
       content,
     };
-  } catch (err) {
-    return null;
+  } catch {
+    return null; // Remove unused `err` variable
   }
 }
-
-
