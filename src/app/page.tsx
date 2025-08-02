@@ -17,7 +17,9 @@ export default async function Home() {
       <div className="space-y-6">
         {articles.map((article, i) => (
           <div key={i} className="border rounded-lg p-4 shadow">
-            <h2 className="text-xl font-semibold">{article.title}</h2>
+            <a href={`/articles/${slugify(article.title)}`} className="text-xl font-semibold text-green-700 hover:underline">
+              {article.title}
+            </a>
             <p className="text-gray-500 text-sm">{article.date}</p>
             <p className="mt-2 text-gray-700">{article.excerpt}</p>
           </div>
@@ -44,3 +46,10 @@ function getArticles(): Article[] {
     };
   });
 }
+function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/[^\w ]+/g, '')
+    .replace(/ +/g, '-');
+}
+
