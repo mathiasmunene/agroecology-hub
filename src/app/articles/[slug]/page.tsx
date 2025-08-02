@@ -28,20 +28,25 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
   };
 }
 
-export default function ArticlePage({ params }: { params: Params }) {
-  const article = getArticle(params.slug);
+export default async function ArticlePage({ params }: { params: Params }) {
+  const article = await getArticle(params.slug);
   if (!article) return notFound();
 
   return (
     <main className="p-6 max-w-3xl mx-auto">
-      <h1 className="text-3xl font-bold mb-2">{article.title}</h1>
+      <h1 className="text-3xl font-bold mb-2 text-green-700">{article.title}</h1>
       <p className="text-sm text-gray-500 mb-6">{article.date}</p>
-      <article className="prose prose-lg">{article.content}</article>
+      <article className="prose prose-lg">
+        {article.content.split('\n\n').map((para, i) => (
+          <p key={i}>{para}</p>
+        ))}
+      </article>
     </main>
   );
 }
 
-function getArticle(slug: string) {
+
+async function getArticle(slug: string) {
   try {
     const file = fs.readFileSync(
       path.join(process.cwd(), 'content/articles', `${slug}.md`),
@@ -57,3 +62,4 @@ function getArticle(slug: string) {
     return null;
   }
 }
+
