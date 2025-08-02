@@ -22,15 +22,18 @@ export async function generateStaticParams() {
 }
 
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
-  const article = getArticle(params.slug);
+  const article = await getArticle(params.slug); // ✅ Fix is here
+
   return {
     title: article?.title || 'Article',
   };
 }
 
+
 export default async function ArticlePage({ params }: { params: Params }) {
   const article = await getArticle(params.slug);
-  if (!article) return notFound();
+
+  if (!article) return notFound(); // This handles null
 
   return (
     <main className="p-6 max-w-3xl mx-auto">
@@ -46,7 +49,10 @@ export default async function ArticlePage({ params }: { params: Params }) {
 }
 
 
-async function getArticle(slug: string) {
+
+async function getArticle(
+  slug: string
+): Promise<{ title: string; date: string; content: string } | null> {
   try {
     const file = fs.readFileSync(
       path.join(process.cwd(), 'content/articles', `${slug}.md`),
@@ -62,4 +68,5 @@ async function getArticle(slug: string) {
     return null;
   }
 }
+
 
